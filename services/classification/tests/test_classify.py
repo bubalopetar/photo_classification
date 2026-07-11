@@ -16,7 +16,7 @@ if not MODEL.exists():
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app.classifier import UNSAFE_KEYWORDS, MediaPipeClassifier  # noqa: E402
+from app.classifier import MediaPipeClassifier  # noqa: E402
 from app.main import app  # noqa: E402
 
 
@@ -35,7 +35,6 @@ def test_classify_endpoint_returns_valid_result():
         body = r.json()
         assert body["category"]  # a non-empty ImageNet label
         assert 0.0 <= body["confidence"] <= 1.0
-        assert isinstance(body["safe"], bool)
 
 
 def test_empty_image_rejected():
@@ -78,9 +77,3 @@ def test_picks_highest_confidence_category():
     res = clf.classify(_png())
     assert res.category == "studio couch"
     assert res.confidence == 0.62
-
-
-def test_unsafe_keyword_flagging():
-    # Unit-test the safety rule without needing an actual weapon photo.
-    assert any(k in "assault rifle" for k in UNSAFE_KEYWORDS)
-    assert not any(k in "golden retriever" for k in UNSAFE_KEYWORDS)

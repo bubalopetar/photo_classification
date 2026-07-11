@@ -15,13 +15,6 @@ from typing import Protocol
 
 from app.schemas import ClassificationResult
 
-# Content-safety rule: if any of the top ImageNet labels contains one of these
-# keywords with non-trivial confidence, flag the image. ImageNet has
-# weapon-adjacent classes ("assault rifle", "revolver", "rifle", ...) that the
-# safety gate keys off.
-UNSAFE_KEYWORDS = ("rifle", "revolver", "pistol", "assault", "guillotine", "missile")
-UNSAFE_SCORE_THRESHOLD = 0.20
-
 
 class Classifier(Protocol):
     def classify(self, image: bytes) -> ClassificationResult: ...
@@ -66,15 +59,7 @@ class MediaPipeClassifier:
             return ClassificationResult(category="unknown", confidence=0.0)
 
         top = max(categories, key=lambda c: c.score)
-        flagged = [
-            c.category_name
-            for c in categories
-            if c.score >= UNSAFE_SCORE_THRESHOLD
-            and any(k in c.category_name.lower() for k in UNSAFE_KEYWORDS)
-        ]
         return ClassificationResult(
             category=top.category_name,
             confidence=round(float(top.score), 4),
-            safe=not flagged,
-            reasons=[f"content flagged as '{name}'" for name in flagged],
         )

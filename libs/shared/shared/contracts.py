@@ -10,13 +10,7 @@ from pydantic import BaseModel, Field
 
 
 class ClassificationResult(BaseModel):
-    """Result returned by the Classification service for one image.
-
-    `safe` is the content-safety verdict: Submissions rejects an upload when it
-    is False. `reasons` explains a rejection (empty when safe).
-    """
+    """Result returned by the Classification service for one image."""
 
     category: str = Field(examples=["portrait", "landscape", "animal"])
     confidence: float = Field(ge=0.0, le=1.0, examples=[0.92])
-    safe: bool = True
-    reasons: list[str] = Field(default_factory=list)

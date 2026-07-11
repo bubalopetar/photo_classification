@@ -105,9 +105,6 @@ async def upload_post(
     except safety.UnsafeUpload as exc:
         ctx["error"] = exc.reason
         return templates.TemplateResponse(request, "upload.html", ctx, status_code=422)
-    except service.UnsafeContent as exc:
-        ctx["error"] = "Content rejected: " + "; ".join(exc.reasons)
-        return templates.TemplateResponse(request, "upload.html", ctx, status_code=422)
     except ClassificationError:
         ctx["error"] = "Classification service is unavailable, try again."
         return templates.TemplateResponse(request, "upload.html", ctx, status_code=502)

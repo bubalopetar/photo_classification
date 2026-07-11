@@ -66,11 +66,6 @@ async def create_submission(
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.reason
         ) from exc
-    except service.UnsafeContent as exc:
-        raise HTTPException(
-            status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"message": "Content rejected", "reasons": exc.reasons},
-        ) from exc
     except ClassificationError as exc:
         raise HTTPException(
             status.HTTP_502_BAD_GATEWAY, detail="Classification service unavailable"

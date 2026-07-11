@@ -32,7 +32,7 @@ diagram.
 |---|---|---|
 | **auth** | Registration, login, JWT issuing, user admin | `users` DB |
 | **submissions** | Photo upload, metadata, admin filter/search, admin panel | `submissions` DB + photo volume |
-| **classification** | Image classification + content-safety verdict | nothing (stateless) |
+| **classification** | Image classification | nothing (stateless) |
 
 The split is by **bounded context**, and classification is a service (not a
 module) for a concrete reason: it has a different scaling and resource profile
@@ -187,7 +187,6 @@ Documented as **what / where / why**:
 | Image-dimension cap | submissions `safety.py` | Reject decompression bombs. |
 | **EXIF stripping** (re-encode via Pillow) | submissions `safety.py` | Remove GPS/device metadata (privacy). |
 | Server-generated UUID object keys | submissions `storage.py` | Malicious filenames can't traverse paths / collide. |
-| Content-safety gate | classification `classifier.py` → submissions `service.py` | Unsafe images (`safe=false`) are rejected (422) with the reason. |
 | Input validation (age range, gender enum, length caps) | submissions `schemas.py` | Reject malformed metadata early. |
 | **Password policy** (min 8 chars, must not contain the e-mail) | auth `manager.py` (`validate_password`) | Enforced by fastapi-users on register, reset and update — every path that sets a password; blocks trivially guessable credentials. |
 | **Rate limiting, per client IP** — login 10/min, register 5/min (auth); upload 20/min (submissions) | `libs/shared/ratelimit.py`, wired in each service's `limits.py` | Damps credential brute-force, bulk account creation, and upload abuse (uploads fan out into classification + storage). JSON and browser variants of an endpoint share one bucket so the limit can't be bypassed by alternating; limited clients get `429` + `Retry-After`. In-memory per replica by design — see the module docstring for the Redis upgrade path. Budgets/window tunable via `LOGIN_RATE_LIMIT`, `REGISTER_RATE_LIMIT`, `UPLOAD_RATE_LIMIT`, `RATE_LIMIT_WINDOW_SECONDS`; kill switch `RATE_LIMIT_ENABLED=false`. |
@@ -209,10 +208,6 @@ curl -L -o services/classification/models/efficientnet_lite0.tflite \
   https://storage.googleapis.com/mediapipe-models/image_classifier/efficientnet_lite0/float32/latest/efficientnet_lite0.tflite
 ```
 
-**Content safety:** if any top label matches a weapon-related keyword
-(`rifle`, `revolver`, `pistol`, ...) above a confidence threshold, the image is
-flagged unsafe and Submissions rejects the upload with the reason.
-
 Inference runs in a threadpool (CPU-bound work stays off the event loop) behind
 a lock (MediaPipe task objects aren't documented as thread-safe). The
 `Classifier` protocol is the seam for swapping in a different model
@@ -231,7 +226,7 @@ cd services/submissions && PYTHONPATH=".:../../libs/shared" pytest -q
 ruff check services libs
 ```
 
-60 tests cover: JWT round-trip/claims, auth register/login, the password
+65 tests cover: JWT round-trip/claims, auth register/login, the password
 policy, rate limiting (the sliding-window limiter plus the 429 behaviour of
 login/register/upload), CORS (deny-by-default and the origin allow-list),
 the safety gate (incl. EXIF stripping and

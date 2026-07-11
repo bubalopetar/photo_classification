@@ -103,8 +103,8 @@ def set_classifier(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def safe_classifier(set_classifier):
-    """Default: every upload is classified safe unless a test overrides it."""
+def stub_classifier(set_classifier):
+    """Default: every upload gets a stub classification unless a test overrides it."""
     from app.schemas import ClassificationResult
 
-    set_classifier(ClassificationResult(category="portrait", confidence=0.9, safe=True))
+    set_classifier(ClassificationResult(category="portrait", confidence=0.9))

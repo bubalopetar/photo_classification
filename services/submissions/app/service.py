@@ -1,8 +1,8 @@
 """Core submission workflow, shared by the JSON API and the browser form.
 
-Sequence: validate + clean the image (safety gate) -> classify -> reject if
-unsafe -> store the photo -> persist the row. The photo is only written and the
-row only created once the content is confirmed safe.
+Sequence: validate + clean the image (safety gate) -> classify -> store the
+photo -> persist the row. The photo is only written and the row only created
+once the input has passed validation and been classified.
 """
 
 from __future__ import annotations
@@ -14,14 +14,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app import classifier_client, safety, storage
 from app.models import Submission
 from app.schemas import SubmissionMetadata
-
-
-class UnsafeContent(Exception):
-    """Classification flagged the image; the upload is refused."""
-
-    def __init__(self, reasons: list[str]):
-        self.reasons = reasons
-        super().__init__("; ".join(reasons) or "unsafe content")
 
 
 async def create_submission(
@@ -38,11 +30,7 @@ async def create_submission(
     # 2. Classify (raises classifier_client.ClassificationError if unreachable).
     result = await classifier_client.classify(clean_bytes, content_type)
 
-    # 3. Content-safety verdict.
-    if not result.safe:
-        raise UnsafeContent(result.reasons)
-
-    # 4. Store the (cleaned) photo, then 5. persist the record.
+    # 3. Store the (cleaned) photo, then 4. persist the record.
     key = storage.new_key(content_type)
     storage.storage.put(key, clean_bytes, content_type)
 

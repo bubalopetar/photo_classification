@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from app.main import app
-from app.schemas import ClassificationResult
 
 
 def _png() -> bytes:
@@ -74,20 +73,6 @@ def test_age_out_of_range_rejected(client, token):
         data=_meta(age="999"),
     )
     assert r.status_code == 422
-
-
-def test_unsafe_content_rejected(client, token, set_classifier):
-    set_classifier(
-        ClassificationResult(category="weapon", confidence=0.9, safe=False, reasons=["flagged"])
-    )
-    r = client.post(
-        "/submissions",
-        headers=_auth(token()),
-        files={"image": ("p.png", _png(), "image/png")},
-        data=_meta(),
-    )
-    assert r.status_code == 422
-    assert "reasons" in r.json()["detail"]
 
 
 def test_my_submissions_scoped_to_owner(client, token):
