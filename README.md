@@ -252,25 +252,28 @@ the Docker image always ships it).
    EfficientNet-Lite0 weights so the classification tests actually run instead
    of auto-skipping, then runs `pytest` per package exactly as in
    "Testing & linting" above.
-3. **build-and-push** — a matrix job over `auth` / `submissions` /
-   `classification` builds each Docker image (repo root as build context, same
-   command as local: `docker build -f services/<svc>/Dockerfile .`). On `main`
-   the images are pushed to Docker Hub as
-   `<user>/photo-<svc>:latest` and `<user>/photo-<svc>:<git sha>`; PR builds
-   only verify the image builds. Layer caching goes through the GitHub Actions
+3. **build** — a matrix job over `auth` / `submissions` / `classification`
+   builds each Docker image (repo root as build context, same command as
+   local: `docker build -f services/<svc>/Dockerfile .`), tagged
+   `photo-<svc>:<git sha>`. Layer caching goes through the GitHub Actions
    cache.
 
-Pushing requires two repository secrets: `DOCKERHUB_USERNAME` and
-`DOCKERHUB_TOKEN` (a Docker Hub access token with Read & Write scope).
+**Registry push — documented, not implemented.** There is no registry account
+for this assessment, so images are built but not published. The push step
+would be two additions to the `build` job: a `docker/login-action` step
+authenticating with registry secrets (e.g. `DOCKERHUB_USERNAME` +
+`DOCKERHUB_TOKEN`, or the built-in `GITHUB_TOKEN` for GHCR), and flipping
+`push: true` with fully-qualified tags
+(`<registry>/<user>/photo-<svc>:latest` and `:<git sha>`), gated to `main` so
+pull requests only verify the build.
 
-**Deployment step — documented, not implemented.** There is no target cluster
-for this assessment, so the pipeline stops after pushing images. The deploy
-job would: run on `main` after `build-and-push`, authenticate to the cluster
-via a `KUBECONFIG` secret (or a cloud OIDC role), substitute the freshly
-pushed `:<git sha>` tag into the manifests (kustomize `images:` or Helm
-`--set image.tag=`), and `kubectl apply` / `helm upgrade --install` followed
-by `kubectl rollout status` per Deployment so a failed rollout fails the
-pipeline.
+**Deployment step — documented, not implemented.** There is likewise no
+target cluster. The deploy job would: run on `main` after the push, authenticate
+to the cluster via a `KUBECONFIG` secret (or a cloud OIDC role), substitute
+the freshly pushed `:<git sha>` tag into the manifests (kustomize `images:`
+or Helm `--set image.tag=`), and `kubectl apply` / `helm upgrade --install`
+followed by `kubectl rollout status` per Deployment so a failed rollout fails
+the pipeline.
 
 ---
 
