@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+  <h1>Create account</h1>
+  <p class="sub">One minute, and you can start submitting photos.</p>
+  <form method="post" action="/register">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" placeholder="you@example.com" value="{{ email or '' }}" required autofocus>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" placeholder="At least 8 characters" required>
+    <button type="submit">Create account</button>
+  </form>
+  <p class="muted">Already have an account? <a href="/login">Log in</a></p>
+{% endblock %}

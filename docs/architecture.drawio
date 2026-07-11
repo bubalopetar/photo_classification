@@ -1,0 +1,69 @@
+<mxfile host="app.diagrams.net" modified="2026-07-10T00:00:00.000Z" agent="claude-code" version="24.0.0">
+  <diagram id="photo-platform" name="Architecture">
+    <mxGraphModel dx="1100" dy="760" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="800" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="Photo Classification Platform — Microservices" style="text;html=1;fontSize=18;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="500" height="30" as="geometry" />
+        </mxCell>
+
+        <mxCell id="client" value="Browser / API client" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="470" y="80" width="180" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="auth" value="Auth service&#10;(FastAPI · :8001)&#10;register / login / JWT&#10;users admin (sqladmin)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="120" y="230" width="230" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="sub" value="Submissions service&#10;(FastAPI · :8002)&#10;upload + metadata + safety gate&#10;admin filter/search + sqladmin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="450" y="230" width="240" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="clf" value="Classification service&#10;(FastAPI · :8003)&#10;classify + content-safety&#10;EfficientNet-Lite0 (MediaPipe)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="800" y="230" width="230" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pgauth" value="PostgreSQL&#10;auth db&#10;(users)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="150" y="430" width="150" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pgsub" value="PostgreSQL&#10;submissions db&#10;(submission + indexes)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="450" y="430" width="170" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="minio" value="Photo volume&#10;(local disk / PVC)&#10;photo bytes" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="670" y="430" width="150" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="note" value="Every service verifies JWTs LOCALLY with the shared SECRET&#10;(claims: sub, email, is_superuser). Auth is not on the request hot path." style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;align=left;spacingLeft=8;" vertex="1" parent="1">
+          <mxGeometry x="120" y="620" width="470" height="60" as="geometry" />
+        </mxCell>
+
+        <!-- edges -->
+        <mxCell id="e_c_auth" value="register / login (HTTPS)" style="endArrow=classic;html=1;fontSize=10;" edge="1" parent="1" source="client" target="auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_c_sub" value="upload / list (JWT)" style="endArrow=classic;html=1;fontSize=10;" edge="1" parent="1" source="client" target="sub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_auth_pg" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="auth" target="pgauth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sub_pg" value="" style="endArrow=classic;html=1;" edge="1" parent="1" source="sub" target="pgsub">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sub_minio" value="photo bytes" style="endArrow=classic;html=1;fontSize=10;" edge="1" parent="1" source="sub" target="minio">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sub_clf" value="POST /classify&#10;(sync REST)" style="endArrow=classic;html=1;fontSize=10;" edge="1" parent="1" source="sub" target="clf">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sub_auth" value="admin-panel login&#10;(exchange creds, once)" style="endArrow=classic;html=1;dashed=1;fontSize=10;strokeColor=#9673a6;" edge="1" parent="1" source="sub" target="auth">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block layout %}
+  <style>
+    .split {
+      display: flex; gap: 1.25rem; align-items: flex-start; justify-content: center;
+      width: 100%; max-width: 1200px;
+    }
+    .split .card.welcome { flex: 0 0 340px; max-width: 340px; }
+    .split .card.panel { flex: 1 1 auto; min-width: 0; max-width: 820px; }
+    @media (max-width: 860px) {
+      .split { flex-direction: column; align-items: center; }
+      .split .card.welcome, .split .card.panel { flex: none; width: 100%; max-width: 480px; }
+    }
+    .panel h2 { font-size: 1.15rem; margin: 0 0 .35rem; letter-spacing: -.02em; }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+    th, td { text-align: left; padding: .6rem .65rem; vertical-align: middle; }
+    thead th {
+      font-size: .74rem; text-transform: uppercase; letter-spacing: .05em;
+      color: var(--text-muted); font-weight: 600;
+    }
+    tbody tr { border-top: 1px solid var(--card-border); transition: background .12s; }
+    tbody tr:hover { background: var(--accent-soft); }
+    .thumb {
+      height: 54px; width: 54px; object-fit: cover; border-radius: 10px; display: block;
+      border: 1px solid var(--card-border);
+    }
+    .badge {
+      display: inline-block; padding: .28rem .7rem; border-radius: 999px;
+      font-size: .8rem; font-weight: 600; background: #e6f4ea; color: #1e7e34;
+    }
+    @media (prefers-color-scheme: dark) {
+      .badge { background: rgba(30, 126, 52, .2); color: #6fdb8b; }
+    }
+    .conf { color: var(--text-muted); font-size: .78rem; margin-top: .2rem; }
+    .empty { text-align: center; color: var(--text-muted); padding: 2rem 0; }
+    .when { color: var(--text-muted); font-size: .84rem; white-space: nowrap; }
+    .del {
+      margin: 0; width: auto; padding: .4rem .6rem; font-size: .9rem; line-height: 1;
+      background: transparent; box-shadow: none; color: var(--text-muted);
+      border: 1px solid var(--card-border); border-radius: 8px;
+    }
+    .del:hover { color: #b42318; border-color: #b42318; background: rgba(180, 35, 24, .08); filter: none; }
+    @media (prefers-color-scheme: dark) { .del:hover { color: #ff9d94; border-color: rgba(180, 35, 24, .5); } }
+  </style>
+  <div class="split">
+    <div class="card welcome">
+      <h1>Welcome 👋</h1>
+      <p class="sub">Signed in as <strong>{{ user.email }}</strong></p>
+      <a class="btn" href="{{ submissions_url }}/upload">Upload a photo</a>
+      <div class="row">
+        <a class="btn secondary" href="/logout">Log out</a>
+      </div>
+      {% if user.is_superuser %}
+      <p class="muted" style="margin-bottom:.4rem">Admin</p>
+      <div class="row" style="margin-top:0">
+        <a class="btn secondary" href="/admin">Users admin</a>
+        <a class="btn secondary" href="{{ submissions_url }}/admin">Submissions admin</a>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card panel">
+      <h2>My submissions</h2>
+      {% if submissions is none %}
+        <p class="empty">Couldn't load your submissions right now — try again in a moment.</p>
+      {% elif submissions %}
+        <p class="sub">{{ submissions | length }} so far, newest first.</p>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr><th>Photo</th><th>Name</th><th>Age</th><th>Place</th><th>Country</th><th>Classification</th><th>Submitted</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for s in submissions %}
+              <tr>
+                <td><a href="{{ submissions_url }}/submissions/{{ s.id }}/photo" target="_blank"><img class="thumb" src="{{ submissions_url }}/submissions/{{ s.id }}/photo" alt="photo"></a></td>
+                <td><strong>{{ s.name }}</strong></td>
+                <td>{{ s.age }}</td>
+                <td>{{ s.place_of_living }}</td>
+                <td>{{ s.country_of_origin }}</td>
+                <td>
+                  <span class="badge">{{ s.classification.category }}</span>
+                  <div class="conf">{{ '%.0f' % (s.classification.confidence * 100) }}% confidence</div>
+                </td>
+                <td class="when">{{ s.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+                <td>
+                  <form method="post" action="{{ submissions_url }}/submissions/{{ s.id }}/delete"
+                        onsubmit="return confirm('Delete this submission? This can\'t be undone.')">
+                    <button class="del" type="submit" title="Delete submission">🗑</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="empty">No submissions yet — upload your first photo to see it here.</p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

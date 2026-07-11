@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+  <h1>Welcome back</h1>
+  <p class="sub">Log in to upload and track your submissions.</p>
+  <form method="post" action="/login">
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" placeholder="you@example.com" value="{{ email or '' }}" required autofocus>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" placeholder="••••••••" required>
+    <button type="submit">Log in</button>
+  </form>
+  <p class="muted">No account? <a href="/register">Create one</a></p>
+{% endblock %}

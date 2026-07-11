@@ -1,0 +1,78 @@
+# Local orchestration of the whole platform: three microservices + PostgreSQL
+# (one instance, one database per service). Photos are stored on a named
+# volume mounted into the submissions container.
+# `docker-compose up --build` brings everything up; the browser entry point is
+# the Auth service at http://localhost:8001.
+#
+# All build contexts are the repo root so each image can copy both its own
+# service (services/<name>) and the shared library (libs/shared).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      # Multiple databases (one per service) are created by the init script.
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth:
+    build:
+      context: .
+      dockerfile: services/auth/Dockerfile
+    environment:
+      SECRET: ${SECRET}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/auth
+      COOKIE_SECURE: "false"
+      SUBMISSIONS_PUBLIC_URL: http://localhost:8002
+      # In-cluster address for the home page's server-side submissions fetch.
+      SUBMISSIONS_URL: http://submissions:8002
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-adminpass}
+    ports:
+      - "8001:8001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  submissions:
+    build:
+      context: .
+      dockerfile: services/submissions/Dockerfile
+    environment:
+      SECRET: ${SECRET}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-app}@postgres:5432/submissions
+      CLASSIFICATION_URL: http://classification:8003
+      AUTH_URL: http://auth:8001
+      AUTH_PUBLIC_URL: http://localhost:8001
+      STORAGE_LOCAL_DIR: /data/uploads
+    volumes:
+      - photodata:/data/uploads
+    ports:
+      - "8002:8002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      classification:
+        condition: service_started
+
+  classification:
+    build:
+      context: .
+      dockerfile: services/classification/Dockerfile
+    ports:
+      - "8003:8003"
+
+volumes:
+  pgdata:
+  photodata:

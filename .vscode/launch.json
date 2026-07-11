@@ -1,0 +1,53 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "auth (8001)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8001"],
+      "cwd": "${workspaceFolder}/services/auth",
+      "jinja": true,
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": "${workspaceFolder}/services/auth:${workspaceFolder}/libs/shared"
+      }
+    },
+    {
+      "name": "submissions (8002)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8002"],
+      "cwd": "${workspaceFolder}/services/submissions",
+      "jinja": true,
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": "${workspaceFolder}/services/submissions:${workspaceFolder}/libs/shared"
+      }
+    },
+    {
+      "name": "classification (8003)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8003"],
+      "cwd": "${workspaceFolder}/services/classification",
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": "${workspaceFolder}/services/classification:${workspaceFolder}/libs/shared"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "ALL services (8001 + 8002 + 8003)",
+      "configurations": ["auth (8001)", "submissions (8002)", "classification (8003)"],
+      "stopAll": true
+    }
+  ]
+}

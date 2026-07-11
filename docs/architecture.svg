@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="760" viewBox="0 0 1080 760" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <rect width="1080" height="760" fill="#ffffff"/>
+  <text x="540" y="38" text-anchor="middle" font-size="22" font-weight="700" fill="#1a1a1a">Photo Classification Platform — Microservices</text>
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#555"/>
+    </marker>
+    <marker id="arrowp" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#9673a6"/>
+    </marker>
+  </defs>
+
+  <!-- edges (drawn first, behind boxes) -->
+  <!-- client -> auth -->
+  <line x1="500" y1="135" x2="250" y2="215" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="330" y="170" font-size="12" fill="#333">register / login (HTTPS)</text>
+  <!-- client -> submissions -->
+  <line x1="580" y1="135" x2="600" y2="215" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="600" y="180" font-size="12" fill="#333">upload / list (JWT)</text>
+  <!-- auth -> pg auth -->
+  <line x1="235" y1="320" x2="235" y2="420" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <!-- submissions -> pg sub -->
+  <line x1="545" y1="320" x2="545" y2="420" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <!-- submissions -> minio -->
+  <line x1="650" y1="320" x2="740" y2="420" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="700" y="378" font-size="12" fill="#333">photo bytes</text>
+  <!-- submissions -> classification -->
+  <line x1="700" y1="270" x2="815" y2="270" stroke="#555" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="705" y="255" font-size="12" fill="#333">POST /classify (sync REST)</text>
+  <!-- submissions -> auth (dashed) -->
+  <line x1="450" y1="300" x2="355" y2="300" stroke="#9673a6" stroke-width="1.6" stroke-dasharray="6 4" marker-end="url(#arrowp)"/>
+  <text x="300" y="335" font-size="11" fill="#9673a6">admin-panel login (once)</text>
+
+  <!-- client -->
+  <rect x="470" y="80" width="180" height="55" rx="8" fill="#dae8fc" stroke="#6c8ebf" stroke-width="1.6"/>
+  <text x="560" y="113" text-anchor="middle" font-size="14" fill="#1a1a1a">Browser / API client</text>
+
+  <!-- auth -->
+  <rect x="120" y="220" width="235" height="100" rx="8" fill="#d5e8d4" stroke="#82b366" stroke-width="1.6"/>
+  <text x="237" y="245" text-anchor="middle" font-size="14" font-weight="600" fill="#1a1a1a">Auth service</text>
+  <text x="237" y="266" text-anchor="middle" font-size="12" fill="#333">FastAPI · :8001</text>
+  <text x="237" y="286" text-anchor="middle" font-size="12" fill="#333">register / login / JWT</text>
+  <text x="237" y="304" text-anchor="middle" font-size="12" fill="#333">users admin (sqladmin)</text>
+
+  <!-- submissions -->
+  <rect x="450" y="220" width="250" height="100" rx="8" fill="#d5e8d4" stroke="#82b366" stroke-width="1.6"/>
+  <text x="575" y="245" text-anchor="middle" font-size="14" font-weight="600" fill="#1a1a1a">Submissions service</text>
+  <text x="575" y="266" text-anchor="middle" font-size="12" fill="#333">FastAPI · :8002</text>
+  <text x="575" y="286" text-anchor="middle" font-size="12" fill="#333">upload + metadata + safety gate</text>
+  <text x="575" y="304" text-anchor="middle" font-size="12" fill="#333">admin filter/search + sqladmin</text>
+
+  <!-- classification -->
+  <rect x="815" y="220" width="235" height="100" rx="8" fill="#d5e8d4" stroke="#82b366" stroke-width="1.6"/>
+  <text x="932" y="245" text-anchor="middle" font-size="14" font-weight="600" fill="#1a1a1a">Classification service</text>
+  <text x="932" y="266" text-anchor="middle" font-size="12" fill="#333">FastAPI · :8003</text>
+  <text x="932" y="286" text-anchor="middle" font-size="12" fill="#333">classify + content-safety</text>
+  <text x="932" y="304" text-anchor="middle" font-size="12" fill="#333">EfficientNet-Lite0 (MediaPipe)</text>
+
+  <!-- pg auth -->
+  <g>
+    <ellipse cx="235" cy="430" rx="75" ry="12" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.6"/>
+    <path d="M160,430 v70 a75,12 0 0 0 150,0 v-70" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.6"/>
+    <text x="235" y="460" text-anchor="middle" font-size="12" font-weight="600" fill="#1a1a1a">PostgreSQL</text>
+    <text x="235" y="478" text-anchor="middle" font-size="12" fill="#333">auth db (users)</text>
+  </g>
+
+  <!-- pg sub -->
+  <g>
+    <ellipse cx="545" cy="430" rx="85" ry="12" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.6"/>
+    <path d="M460,430 v70 a85,12 0 0 0 170,0 v-70" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.6"/>
+    <text x="545" y="460" text-anchor="middle" font-size="12" font-weight="600" fill="#1a1a1a">PostgreSQL</text>
+    <text x="545" y="478" text-anchor="middle" font-size="12" fill="#333">submissions db</text>
+    <text x="545" y="494" text-anchor="middle" font-size="11" fill="#333">(indexed columns)</text>
+  </g>
+
+  <!-- photo volume -->
+  <g>
+    <ellipse cx="775" cy="430" rx="70" ry="12" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.6"/>
+    <path d="M705,430 v70 a70,12 0 0 0 140,0 v-70" fill="#ffe6cc" stroke="#d79b00" stroke-width="1.6"/>
+    <text x="775" y="460" text-anchor="middle" font-size="12" font-weight="600" fill="#1a1a1a">Photo volume</text>
+    <text x="775" y="478" text-anchor="middle" font-size="12" fill="#333">local disk / PVC</text>
+  </g>
+
+  <!-- note -->
+  <rect x="120" y="600" width="560" height="66" rx="4" fill="#fff2cc" stroke="#d6b656" stroke-width="1.4"/>
+  <text x="135" y="625" font-size="12" font-weight="600" fill="#7a5c00">Stateless auth</text>
+  <text x="135" y="644" font-size="12" fill="#5c4a00">Every service verifies JWTs locally with the shared SECRET (claims: sub, email,</text>
+  <text x="135" y="660" font-size="12" fill="#5c4a00">is_superuser). Auth is not on the request hot path — no per-request callbacks.</text>
+
+  <!-- database-per-service legend -->
+  <rect x="720" y="600" width="330" height="66" rx="4" fill="#f5f5f5" stroke="#b3b3b3" stroke-width="1.4"/>
+  <text x="735" y="625" font-size="12" font-weight="600" fill="#333">Database-per-service</text>
+  <text x="735" y="644" font-size="12" fill="#444">Each service owns its DB; no cross-DB foreign keys.</text>
+  <text x="735" y="660" font-size="12" fill="#444">Photos on a mounted volume, keys + metadata in Postgres.</text>
+</svg>

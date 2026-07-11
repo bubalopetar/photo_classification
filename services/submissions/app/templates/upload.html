@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Upload a photo{% endblock %}
+{% block content %}
+  <h1>Submit a photo</h1>
+  <p class="sub">{% if email %}Signed in as <strong>{{ email }}</strong> · {% endif %}We'll classify it instantly.</p>
+  <form method="post" action="/upload" enctype="multipart/form-data">
+    <label for="image">Photo</label>
+    <input id="image" name="image" type="file" accept="image/*" required>
+
+    <div class="grid2">
+      <div>
+        <label for="name">Name</label>
+        <input id="name" name="name" placeholder="Full name" required maxlength="200">
+      </div>
+      <div>
+        <label for="age">Age</label>
+        <input id="age" name="age" type="number" placeholder="e.g. 29" min="0" max="120" required>
+      </div>
+      <div>
+        <label for="gender">Gender</label>
+        <select id="gender" name="gender" required>
+          {% for g in genders %}<option value="{{ g }}">{{ g.replace('_', ' ') }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="country_of_origin">Country of origin</label>
+        <input id="country_of_origin" name="country_of_origin" placeholder="e.g. Croatia" required maxlength="100">
+      </div>
+    </div>
+
+    <label for="place_of_living">Place of living</label>
+    <input id="place_of_living" name="place_of_living" placeholder="City or town" required maxlength="200">
+
+    <label for="description">Description <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+    <textarea id="description" name="description" rows="3" maxlength="2000" placeholder="Anything worth noting…"></textarea>
+
+    <button type="submit">Submit for classification</button>
+  </form>
+  <p class="muted"><a href="{{ home_url }}">Back to home</a></p>
+{% endblock %}

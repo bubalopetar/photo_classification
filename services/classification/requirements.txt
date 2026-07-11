@@ -1,0 +1,10 @@
+# Pinned for reproducible builds. Direct dependencies only; pip resolves the
+# transitive tree from these.
+fastapi==0.139.0
+uvicorn[standard]==0.51.0
+python-multipart==0.0.32
+pydantic-settings==2.14.2
+# MediaPipe Tasks image classifier running EfficientNet-Lite0. Pulls
+# numpy/opencv. Pillow decodes the upload.
+mediapipe==0.10.35
+pillow==12.3.0

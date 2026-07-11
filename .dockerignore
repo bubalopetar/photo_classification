@@ -1,0 +1,13 @@
+.git
+.env
+**/__pycache__/
+**/*.py[cod]
+venv/
+.venv/
+**/.venv/
+*.db
+**/uploads/
+**/uploads_*/
+.vscode/
+.DS_Store
+docs/

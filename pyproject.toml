@@ -1,0 +1,29 @@
+# Repo-wide tooling config. Each service is deployed independently, but they
+# share one lint/format standard.
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["venv", ".venv", "migrations/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+ignore = [
+    "B008",   # FastAPI uses function calls (Depends/Form) in argument defaults
+    "UP042",  # (str, Enum) is intentional for Pydantic/JSON serialization
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests favour readable one-line assertions over strict line length.
+"**/tests/*" = ["E501"]
+
+[tool.ruff.lint.isort]
+# Every service's package is `app`; the shared library is `shared`. Declare
+# both first-party so import sorting is stable regardless of which directory
+# ruff runs from.
+known-first-party = ["app", "shared"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

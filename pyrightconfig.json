@@ -1,0 +1,14 @@
+{
+  // Each service is its own Python program with its own `app` package, run
+  // with PYTHONPATH=<service>:libs/shared. Execution environments give
+  // Pylance/pyright the same per-service resolution, so `app.models` in
+  // services/submissions resolves to THAT service's models — without this,
+  // all three `app` packages collide and the first one wins.
+  "executionEnvironments": [
+    { "root": "services/auth", "extraPaths": ["services/auth", "libs/shared"] },
+    { "root": "services/submissions", "extraPaths": ["services/submissions", "libs/shared"] },
+    { "root": "services/classification", "extraPaths": ["services/classification", "libs/shared"] },
+    { "root": "libs/shared", "extraPaths": ["libs/shared"] }
+  ],
+  "exclude": ["venv", "**/__pycache__"]
+}

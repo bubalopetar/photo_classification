@@ -1,0 +1,6 @@
+{
+  // Import resolution is configured per-service in pyrightconfig.json
+  // (execution environments) — each service's `app` package resolves against
+  // its own directory, matching the runtime PYTHONPATH.
+  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python"
+}

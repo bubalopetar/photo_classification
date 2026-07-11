@@ -1,0 +1,29 @@
+# Secrets / local env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+
+# SQLite database
+*.db
+
+# Local object storage (LocalStorage backend), incl. the test suite's dir
+uploads/
+uploads_*/
+test_uploads/
+
+# Per-developer Claude Code permissions
+.claude/settings.local.json
+
+# Model weights (downloaded at Docker build / via curl, see README)
+*.tflite
+
+# OS
+.DS_Store
