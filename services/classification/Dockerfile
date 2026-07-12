@@ -6,9 +6,10 @@ ENV PYTHONPATH=/srv \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# mediapipe's opencv dependency needs these shared libraries at runtime.
+# mediapipe's C bindings dlopen libGLESv2/libEGL and its opencv dependency
+# needs libGL/libglib at runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+    libgl1 libglib2.0-0 libgles2 libegl1 && rm -rf /var/lib/apt/lists/*
 
 COPY services/classification/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

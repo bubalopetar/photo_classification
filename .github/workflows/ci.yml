@@ -33,8 +33,9 @@ jobs:
           cache-dependency-path: services/*/requirements.txt
       - name: Install system libraries for MediaPipe
         # Same packages the classification Dockerfile installs: mediapipe's
-        # bundled OpenCV needs libGL/libglib at import time.
-        run: sudo apt-get update -q && sudo apt-get install -y -q libgl1 libglib2.0-0
+        # C bindings dlopen libGLESv2/libEGL and its bundled OpenCV needs
+        # libGL/libglib at import time.
+        run: sudo apt-get update -q && sudo apt-get install -y -q libgl1 libglib2.0-0 libgles2 libegl1
       - name: Install dependencies
         run: |
           pip install -r services/auth/requirements.txt \
