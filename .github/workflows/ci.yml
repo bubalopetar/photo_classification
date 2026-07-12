@@ -39,8 +39,11 @@ jobs:
                       pytest
       - name: Download classifier model
         # Without the weights the classification tests auto-skip; download so
-        # they actually run (the Docker image ships them the same way).
+        # they actually run (the Docker image ships them the same way). The
+        # models dir must be created first: its only content is gitignored,
+        # so the checkout doesn't contain it.
         run: |
+          mkdir -p services/classification/models
           curl -fL -o services/classification/models/efficientnet_lite0.tflite \
             https://storage.googleapis.com/mediapipe-models/image_classifier/efficientnet_lite0/float32/latest/efficientnet_lite0.tflite
       - name: Run tests
