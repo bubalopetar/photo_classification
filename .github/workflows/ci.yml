@@ -40,7 +40,7 @@ jobs:
           pip install -r services/auth/requirements.txt \
                       -r services/submissions/requirements.txt \
                       -r services/classification/requirements.txt \
-                      pytest
+                      pytest pytest-github-actions-annotate-failures
       - name: Download classifier model
         # Without the weights the classification tests auto-skip; download so
         # they actually run (the Docker image ships them the same way). The
@@ -52,11 +52,17 @@ jobs:
             https://storage.googleapis.com/mediapipe-models/image_classifier/efficientnet_lite0/float32/latest/efficientnet_lite0.tflite
       - name: Run tests
         # Same invocation as README § "Testing & linting": pytest per package.
+        # Failures surface as annotations; the ::error marker names the
+        # package so a red run is diagnosable from the run summary alone.
         run: |
-          (cd libs/shared && PYTHONPATH="." pytest -q)
-          for svc in auth submissions classification; do
-            (cd "services/$svc" && PYTHONPATH=".:../../libs/shared" pytest -q)
+          fail=0
+          for pkg in libs/shared services/auth services/submissions services/classification; do
+            if ! (cd "$pkg" && PYTHONPATH=".:../../libs/shared" pytest -q); then
+              echo "::error::pytest failed in $pkg"
+              fail=1
+            fi
           done
+          exit $fail
 
   build:
     needs: [lint, test]
