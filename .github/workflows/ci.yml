@@ -57,8 +57,10 @@ jobs:
         run: |
           fail=0
           for pkg in libs/shared services/auth services/submissions services/classification; do
-            if ! (cd "$pkg" && PYTHONPATH=".:../../libs/shared" pytest -q); then
-              echo "::error::pytest failed in $pkg"
+            if ! out=$(cd "$pkg" && PYTHONPATH=".:../../libs/shared" pytest -q 2>&1); then
+              echo "$out"
+              detail=$(echo "$out" | tail -25 | python3 -c "import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read()))")
+              echo "::error::pytest failed in $pkg:%0A$detail"
               fail=1
             fi
           done
