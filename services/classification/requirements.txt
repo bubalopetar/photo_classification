@@ -5,6 +5,9 @@ uvicorn[standard]==0.51.0
 python-multipart==0.0.32
 pydantic-settings==2.14.2
 # MediaPipe Tasks image classifier running EfficientNet-Lite0. Pulls
-# numpy/opencv. Pillow decodes the upload.
-mediapipe==0.10.35
+# numpy/opencv. Pillow decodes the upload. Linux/arm64 wheels (Docker on
+# Apple Silicon) stop at 0.10.18; everything else uses the current pin.
+# The Tasks ImageClassifier API is identical in both.
+mediapipe==0.10.35; platform_machine != "aarch64"
+mediapipe==0.10.18; platform_machine == "aarch64"
 pillow==12.3.0
