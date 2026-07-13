@@ -19,8 +19,8 @@ uploads/
 uploads_*/
 test_uploads/
 
-# Per-developer Claude Code permissions
-.claude/settings.local.json
+# Claude Code local config and skills
+.claude/
 
 # Model weights (downloaded at Docker build / via curl, see README)
 *.tflite
