@@ -1,30 +1,91 @@
 # Photo Classification Platform
 
+[![CI](https://github.com/bubalopetar/photo_classification/actions/workflows/ci.yml/badge.svg)](https://github.com/bubalopetar/photo_classification/actions/workflows/ci.yml)
+![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-microservices-009688)
+![Docker Compose](https://img.shields.io/badge/docker-compose-2496ED)
+
 A cloud-deployable, web-based platform where users register, log in, upload a
-photo with metadata, and receive a classification result; and admins filter,
+photo with metadata, and receive a classification result — and admins filter,
 search and inspect submissions. Built as **three containerized microservices**
 in one monorepo, orchestrated locally with Docker Compose.
 
-```
-Browser / API client
-        │
-        ├──────────────► Auth service (8001)          ── users, register/login, JWT
-        │                     │ owns
-        │                     ▼
-        │                 PostgreSQL: auth db
-        │
-        └──────────────► Submissions service (8002)    ── upload, metadata, admin panel
-                              │ owns          │
-                              ▼               ├─► photo volume (local disk)
-                          PostgreSQL:         │
-                          submissions db      └─► Classification service (8003)  ── classify + safety
+```mermaid
+flowchart LR
+    client(["Browser / API client"])
+
+    subgraph platform["Docker Compose"]
+        auth["Auth service · :8001<br/><sub>users · register/login · JWT</sub>"]
+        subs["Submissions service · :8002<br/><sub>upload · metadata · admin panel</sub>"]
+        cls["Classification service · :8003<br/><sub>classify + safety</sub>"]
+        authdb[("PostgreSQL<br/>auth db")]
+        subsdb[("PostgreSQL<br/>submissions db")]
+        vol[/"photo volume<br/>(local disk)"/]
+    end
+
+    client -->|REST / HTML| auth
+    client -->|REST / HTML| subs
+    auth --- authdb
+    subs --- subsdb
+    subs --- vol
+    subs -->|"HTTP · POST /classify"| cls
 ```
 
-See [docs/architecture.drawio](docs/architecture.drawio) (editable) and
-[docs/architecture.svg](docs/architecture.svg) (viewable) for the full block
-diagram.
+The editable block diagram lives in [docs/architecture.drawio](docs/architecture.drawio).
 
----
+## Contents
+
+- [Quick start (Docker Compose)](#quick-start-docker-compose)
+- [Local development (no Docker)](#local-development-no-docker)
+- [Why microservices, and why these three](#why-microservices-and-why-these-three)
+- [Repository layout](#repository-layout)
+- [API endpoints](#api-endpoints)
+- [Database](#database)
+- [Security & safety rules](#security--safety-rules)
+- [Classification (real model)](#classification-real-model)
+- [Testing & linting](#testing--linting)
+- [CI/CD](#cicd)
+- [Kubernetes strategy](#kubernetes-strategy)
+
+## Quick start (Docker Compose)
+
+```bash
+cp .env.example .env            # then edit SECRET
+docker compose up --build
+```
+
+This starts PostgreSQL and all three services. A superuser
+(`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`) is created on first boot.
+
+| URL | What |
+|---|---|
+| http://localhost:8001 | Auth — register / login / home |
+| http://localhost:8001/docs | Auth API (Swagger) |
+| http://localhost:8001/admin | Users admin panel (superuser) |
+| http://localhost:8002/upload | Upload a photo (browser) |
+| http://localhost:8002/my | My submissions (browser) |
+| http://localhost:8002/docs | Submissions API (Swagger) |
+| http://localhost:8002/admin | Submissions admin panel (superuser) |
+| http://localhost:8003/docs | Classification API (Swagger) |
+
+**User journey:** open `:8001`, register → you're redirected home → *Upload a
+photo* → fill the form and submit → the classification result is shown → your
+photo lives on the photo volume, its metadata + result in Postgres.
+
+## Local development (no Docker)
+
+Each service defaults to **SQLite** and a local uploads directory, so it runs
+with zero infrastructure. From a service directory, with the shared lib on the
+path:
+
+```bash
+cd services/auth
+PYTHONPATH=".:../../libs/shared" SECRET=dev-secret-please-change \
+  uvicorn app.main:app --reload --port 8001
+```
+
+Do the same for `submissions` (port 8002) and `classification` (port 8003). VS
+Code launch configs for all three are in `.vscode/launch.json`.
 
 ## Why microservices, and why these three
 
@@ -40,17 +101,17 @@ module) for a concrete reason: it has a different scaling and resource profile
 independently. Auth is isolated because identity is a natural trust boundary.
 
 **Communication**
+
 - Clients talk REST/JSON to Auth and Submissions (both also serve minimal HTML).
 - Submissions → Classification is a **synchronous HTTP** call on upload, so the
   result is returned immediately.
 - **Auth is not on the request hot path.** Each service verifies JWTs *locally*
-  using the shared `SECRET` (see `libs/shared/shared/security.py`); Auth adds
+  using the shared `SECRET` (see
+  [libs/shared/shared/security.py](libs/shared/shared/security.py)); Auth adds
   `email` and `is_superuser` claims so downstream services can authorize
   (including admin-only routes) without a network call back to Auth. The one
   exception is the Submissions admin **panel** login, which exchanges
   credentials with Auth once, at login.
-
----
 
 ## Repository layout
 
@@ -71,59 +132,15 @@ Each service is a self-contained image with its own `requirements.txt`,
 `Dockerfile`, and (where stateful) `migrations/`. The build context is the repo
 root so each image can copy both its own code and `libs/shared`.
 
----
-
-## Quick start (Docker Compose)
-
-```bash
-cp .env.example .env            # then edit SECRET
-docker compose up --build
-```
-
-This starts PostgreSQL and all three services. A superuser
-(`ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`) is created on first boot.
-
-| URL | What |
-|---|---|
-| http://localhost:8001 | Auth — register / login / home |
-| http://localhost:8001/docs | Auth API (Swagger) |
-| http://localhost:8002/upload | Upload a photo (browser) |
-| http://localhost:8002/my | My submissions (browser) |
-| http://localhost:8002/docs | Submissions API (Swagger) |
-| http://localhost:8002/admin | Submissions admin panel (superuser) |
-| http://localhost:8001/admin | Users admin panel (superuser) |
-| http://localhost:8003/docs | Classification API (Swagger) |
-
-**User journey:** open `:8001`, register → you're redirected home → *Upload a
-photo* → fill the form and submit → the classification result is shown → your
-photo lives on the photo volume, its metadata + result in Postgres.
-
----
-
-## Local development (no Docker)
-
-Each service defaults to **SQLite** and a local uploads directory, so it runs
-with zero infrastructure. From a service directory, with the shared lib on the
-path:
-
-```bash
-cd services/auth
-PYTHONPATH=".:../../libs/shared" SECRET=dev-secret-please-change \
-  uvicorn app.main:app --reload --port 8001
-```
-
-Do the same for `submissions` (port 8002) and `classification` (port 8003). VS
-Code launch configs for all three are in `.vscode/launch.json`.
-
----
-
 ## API endpoints
 
 **Auth** (`:8001`) — provided by fastapi-users:
+
 - `POST /auth/register` · `POST /auth/jwt/login` · `POST /auth/jwt/logout`
 - `GET /users/me` · `GET|POST /login` · `GET|POST /register` · `GET /logout`
 
 **Submissions** (`:8002`):
+
 - `POST /submissions` — multipart: photo + `name, age, place_of_living, gender, country_of_origin, description?` → returns the stored record incl. classification
 - `GET /submissions/me` — the caller's submissions
 - `GET /submissions/{id}` — one record (owner or admin)
@@ -133,13 +150,12 @@ Code launch configs for all three are in `.vscode/launch.json`.
 - `GET /my` — browser view of the caller's submissions (thumbnails, classification, timestamps)
 
 **Classification** (`:8003`):
+
 - `POST /classify` — image → `{category, confidence, safe, reasons}`
 
 Every service also exposes `GET /health` (liveness) and `GET /ready`
 (readiness — checks the DB where applicable). Full request/response schemas are
 in each service's `/docs`.
-
----
 
 ## Database
 
@@ -157,7 +173,8 @@ btree indexes serves well, with ACID guarantees for writes.
   `photo_content_type`, `classification` (JSON), `created_at`, `updated_at`.
 - **Indexing**: btree indexes on every admin-filter column
   (`age`, `gender`, `place_of_living`, `country_of_origin`), plus `user_id` and
-  `created_at`. See `services/submissions/migrations/versions/0001_initial.py`.
+  `created_at`. See
+  [0001_initial.py](services/submissions/migrations/versions/0001_initial.py).
 - **Migrations**: Alembic per stateful service (async env, driver-agnostic).
   Containers run `alembic upgrade head` on startup (`entrypoint.sh`). The local
   SQLite path uses `create_all` as a convenience fallback.
@@ -165,11 +182,10 @@ btree indexes serves well, with ACID guarantees for writes.
 **Photo storage**: photo bytes are written to a **local directory** (a named
 Docker volume in compose, `STORAGE_LOCAL_DIR`); the database stores only the
 object key, never the bytes. The `Storage` protocol in
-`services/submissions/app/storage.py` is the seam a cloud backend (S3 / GCS /
-MinIO) plugs into for production — implement `put`/`get` and change one line in
-`get_storage()`; nothing else in the service changes.
-
----
+[services/submissions/app/storage.py](services/submissions/app/storage.py) is
+the seam a cloud backend (S3 / GCS / MinIO) plugs into for production —
+implement `put`/`get` and change one line in `get_storage()`; nothing else in
+the service changes.
 
 ## Security & safety rules
 
@@ -193,12 +209,10 @@ Documented as **what / where / why**:
 | **CORS deny-by-default** (explicit origin allow-list via `CORS_ALLOW_ORIGINS`) | `libs/shared/cors.py`, wired in auth & submissions `main.py` | The UI is server-rendered same-origin, so no cross-origin browser access is needed — and none is granted. When a SPA frontend appears, its origin is opted in by env var; wildcard is unsupported because credentialed requests (our cookie auth) + `*` is invalid anyway. Classification deliberately has no CORS: it's internal-only and never exposed to browsers. |
 | Secrets via env / secret store, never in code | all `config.py`, `.env` (git-ignored) | Keep credentials out of the repo/image. |
 
----
-
 ## Classification (real model)
 
-`services/classification/app/classifier.py` runs
-[MediaPipe's image classifier](https://developers.google.com/edge/mediapipe/solutions/vision/image_classifier/python)
+[services/classification/app/classifier.py](services/classification/app/classifier.py)
+runs [MediaPipe's image classifier](https://developers.google.com/edge/mediapipe/solutions/vision/image_classifier/python)
 with **EfficientNet-Lite0** (ImageNet, 1000 labels) on CPU, ~20 ms per image.
 The Docker image downloads the model weights at build time; for a bare-python
 run, download them once:
@@ -215,8 +229,6 @@ a lock (MediaPipe task objects aren't documented as thread-safe). The
 in `main.py`; the API contract (`shared/contracts.py`) and the Submissions
 integration are unchanged.
 
----
-
 ## Testing & linting
 
 ```bash
@@ -229,17 +241,15 @@ ruff check services libs
 65 tests cover: JWT round-trip/claims, auth register/login, the password
 policy, rate limiting (the sliding-window limiter plus the 429 behaviour of
 login/register/upload), CORS (deny-by-default and the origin allow-list),
-the safety gate (incl. EXIF stripping and
-spoofed-type rejection), the upload workflow, the browser pages and admin
-thumbnails, admin RBAC and every filter, and the MediaPipe classifier (the
-classification tests auto-skip if the model file hasn't been downloaded —
-the Docker image always ships it).
-
----
+the safety gate (incl. EXIF stripping and spoofed-type rejection), the upload
+workflow, the browser pages and admin thumbnails, admin RBAC and every filter,
+and the MediaPipe classifier (the classification tests auto-skip if the model
+file hasn't been downloaded — the Docker image always ships it).
 
 ## CI/CD
 
-`.github/workflows/ci.yml` runs on every push to `main` and on pull requests:
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every push to
+`main` and on pull requests:
 
 1. **lint** — `ruff check services libs` (config in `pyproject.toml`).
 2. **test** — installs all three services' pinned requirements into one
@@ -269,8 +279,6 @@ the freshly pushed `:<git sha>` tag into the manifests (kustomize `images:`
 or Helm `--set image.tag=`), and `kubectl apply` / `helm upgrade --install`
 followed by `kubectl rollout status` per Deployment so a failed rollout fails
 the pipeline.
-
----
 
 ## Kubernetes strategy
 
@@ -305,7 +313,8 @@ inference is CPU-bound and its independent scaling is the payoff of splitting
 it out. `auth` and `submissions` run ≥2 replicas for availability. One caveat
 when replicating: the rate limiter is in-memory per pod, so N replicas
 multiply the effective limit by N — production would move the counters to
-Redis (the `RateLimiter` seam in `libs/shared/shared/ratelimit.py`) or pin
+Redis (the `RateLimiter` seam in
+[libs/shared/shared/ratelimit.py](libs/shared/shared/ratelimit.py)) or pin
 clients with session affinity.
 
 ```yaml
@@ -330,8 +339,8 @@ service (RDS / Cloud SQL) rather than an in-cluster pod.
 **Storage.** Short-term, uploaded photos go on a PersistentVolumeClaim mounted
 at `STORAGE_LOCAL_DIR` (`ReadWriteMany` once `submissions` has >1 replica).
 The real answer is object storage: implement the three-method `Storage`
-protocol in `services/submissions/app/storage.py` against S3/GCS and swap it
-in — nothing else changes.
+protocol in [services/submissions/app/storage.py](services/submissions/app/storage.py)
+against S3/GCS and swap it in — nothing else changes.
 
 **Observability.** Liveness/readiness probes are already served by every
 service (`/health`, `/ready` from `libs/shared/shared/health.py`). Logs go to
